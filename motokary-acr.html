@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AČR Motokáry – Komisařský systém</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap');
+
+:root {
+  --bg: #0c0c0c;
+  --s1: #141414;
+  --s2: #1c1c1c;
+  --s3: #242424;
+  --border: #2c2c2c;
+  --border2: #383838;
+  --accent: #f0c000;
+  --accent-d: rgba(240,192,0,0.1);
+  --red: #e03030;
+  --red-d: rgba(224,48,48,0.1);
+  --green: #22c55e;
+  --green-d: rgba(34,197,94,0.1);
+  --blue: #4a9eff;
+  --blue-d: rgba(74,158,255,0.1);
+  --text: #eeeeee;
+  --t2: #888;
+  --t3: #444;
+  --mono: 'Share Tech Mono', monospace;
+  --disp: 'Bebas Neue', sans-serif;
+  --body: 'Barlow', sans-serif;
+  --cond: 'Barlow Condensed', sans-serif;
+  --r: 3px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ═══ HEADER ═══ */
+header {
+  height: 54px;
+  background: var(--s1);
+  border-bottom: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.flag {
+  width: 30px; height: 20px;
+  display: flex; flex-direction: column;
+  border-radius: 2px; overflow: hidden;
+  border: 1px solid #333; flex-shrink: 0;
+}
+.flag-r { background: #d7141a; flex: 1; }
+.flag-w { background: #fff; flex: 1; }
+.h-title { font-family: var(--disp); font-size: 1.6rem; letter-spacing: 4px; color: var(--accent); line-height: 1; }
+.h-sub { font-family: var(--mono); font-size: 0.58rem; color: var(--t3); letter-spacing: 1.5px; }
+.h-sep { width: 1px; height: 28px; background: var(--border); margin: 0 4px; }
+.h-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.h-label { font-family: var(--mono); font-size: 0.58rem; color: var(--t3); letter-spacing: 1px; text-transform: uppercase; }
+#commName {
+  background: var(--s2); border: 1px solid var(--border);
+  color: var(--accent); font-family: var(--mono); font-size: 0.72rem;
+  padding: 5px 10px; border-radius: var(--r); width: 150px; outline: none;
+  transition: border-color 0.2s;
+}
+#commName:focus { border-color: var(--accent); }
+
+/* ═══ APP GRID ═══ */
+.app {
+  display: grid;
+  grid-template-columns: 270px 1fr 300px;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ═══ PANELS ═══ */
+.panel {
+  background: var(--s1);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.panel-r { border-right: none; border-left: 1px solid var(--border); }
+.panel-hdr {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-hdr-title {
+  font-family: var(--mono); font-size: 0.58rem;
+  color: var(--t3); letter-spacing: 2px; text-transform: uppercase;
+}
+
+/* ═══ LEFT PANEL – UPLOAD & API ═══ */
+.upload-zone {
+  margin: 10px 10px 4px;
+  border: 2px dashed var(--border2);
+  border-radius: var(--r);
+  padding: 14px 12px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.upload-zone:hover { border-color: var(--accent); background: var(--accent-d); }
+.upload-zone.has-files { border-color: var(--green); border-style: solid; }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.upload-ico { font-size: 1.4rem; margin-bottom: 4px; display: block; }
+.upload-txt { font-size: 0.72rem; color: var(--t2); line-height: 1.4; }
+.upload-txt strong { color: var(--text); display: block; margin-bottom: 1px; font-size: 0.78rem; }
+
+.upload-zone.sec { border-color: #2a3a4a; }
+.upload-zone.sec:hover { border-color: var(--blue); background: var(--blue-d); }
+.upload-zone.sec.has-files { border-color: var(--blue); border-style: solid; }
+.sec-badge {
+  display: inline-block; background: var(--blue-d); color: var(--blue);
+  font-family: var(--mono); font-size: 0.55rem; letter-spacing: 1px;
+  padding: 2px 6px; border-radius: 2px; margin-bottom: 4px; text-transform: uppercase;
+}
+
+/* File list */
+.file-list-wrap { margin: 0 10px 6px; }
+.file-list-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 3px;
+}
+.file-list-label { font-family: var(--mono); font-size: 0.55rem; color: var(--t3); letter-spacing: 1.5px; text-transform: uppercase; }
+.file-list-clear { font-family: var(--mono); font-size: 0.55rem; color: var(--t3); background: none; border: none; cursor: pointer; padding: 1px 4px; transition: color 0.15s; }
+.file-list-clear:hover { color: var(--red); }
+
+.file-list { display: flex; flex-direction: column; gap: 3px; max-height: 110px; overflow-y: auto; }
+.file-list::-webkit-scrollbar { width: 3px; }
+.file-list::-webkit-scrollbar-thumb { background: var(--border); }
+
+.file-item {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 4px 7px;
+  animation: fadeUp 0.18s ease;
+}
+.file-item.pri { border-left: 2px solid var(--green); }
+.file-item.sec { border-left: 2px solid var(--blue); }
+.file-ico { font-size: 0.7rem; flex-shrink: 0; }
+.file-name { font-family: var(--mono); font-size: 0.6rem; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-pages { font-family: var(--mono); font-size: 0.56rem; color: var(--t3); flex-shrink: 0; }
+.file-del { background: none; border: none; color: var(--t3); cursor: pointer; font-size: 0.65rem; padding: 1px 3px; transition: color 0.15s; flex-shrink: 0; }
+.file-del:hover { color: var(--red); }
+
+.processing-bar {
+  margin: 0 10px 6px;
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 7px 10px; display: none;
+}
+.processing-bar.show { display: block; }
+.processing-label { font-family: var(--mono); font-size: 0.58rem; color: var(--accent); margin-bottom: 5px; letter-spacing: 1px; }
+.processing-track { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.processing-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; border-radius: 2px; }
+
+.panel-divider { margin: 6px 10px; border: none; border-top: 1px solid var(--border); flex-shrink: 0; }
+
+.api-box {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.api-lbl { font-family: var(--mono); font-size: 0.58rem; color: var(--t3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+.api-wrap { position: relative; }
+#apiKey {
+  width: 100%; background: var(--s2); border: 1px solid var(--border);
+  color: var(--t2); font-family: var(--mono); font-size: 0.65rem;
+  padding: 7px 30px 7px 10px; border-radius: var(--r); outline: none;
+  transition: border-color 0.2s;
+}
+#apiKey:focus { border-color: var(--accent); color: var(--text); }
+.api-eye {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--t3); cursor: pointer; font-size: 0.8rem; padding: 2px;
+}
+.api-eye:hover { color: var(--text); }
+.btn-small {
+  width: 100%; margin-top: 6px;
+  background: var(--s3); border: 1px solid var(--border);
+  color: var(--t2); font-family: var(--mono); font-size: 0.65rem;
+  padding: 7px; border-radius: var(--r); cursor: pointer;
+  transition: all 0.2s; letter-spacing: 1px;
+}
+.btn-small:hover { border-color: var(--accent); color: var(--accent); }
+.btn-small.ok { border-color: var(--green); color: var(--green); }
+
+
+/* ═══ MAIN CENTER ═══ */
+.main { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); min-height: 0; }
+
+.query-box {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--s1);
+  flex-shrink: 0;
+}
+.q-label { font-family: var(--mono); font-size: 0.58rem; color: var(--t3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.q-row { display: flex; gap: 10px; align-items: flex-end; }
+#queryInput {
+  flex: 1; background: var(--s2); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text); font-family: var(--body);
+  font-size: 0.88rem; padding: 10px 13px; outline: none; resize: none;
+  height: 68px; line-height: 1.5; transition: border-color 0.2s;
+}
+#queryInput:focus { border-color: var(--accent); }
+#queryInput::placeholder { color: var(--t3); }
+/* Rules loaded indicator */
+.q-row { display: flex; gap: 10px; align-items: flex-end; position: relative; }
+.rules-indicator {
+  position: absolute; top: -20px; right: 0;
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 0.58rem; color: var(--t3);
+  transition: all 0.3s;
+}
+.rules-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--t3); transition: background 0.3s, box-shadow 0.3s;
+  flex-shrink: 0;
+}
+.rules-indicator.ready .rules-dot {
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(34,197,94,0.5);
+}
+.rules-indicator.ready { color: var(--green); }
+.rules-indicator.partial .rules-dot { background: var(--accent); box-shadow: 0 0 6px rgba(240,192,0,0.4); }
+.rules-indicator.partial { color: var(--accent); }
+
+#askBtn {
+  background: var(--accent); color: #000; border: none;
+  border-radius: var(--r); font-family: var(--disp);
+  font-size: 1rem; letter-spacing: 2px; padding: 0 18px;
+  cursor: pointer; height: 68px; transition: opacity 0.2s, transform 0.1s;
+  white-space: nowrap; flex-shrink: 0;
+}
+#askBtn:hover { opacity: 0.85; }
+#askBtn:active { transform: scale(0.97); }
+#askBtn:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
+
+/* Session restore banner */
+.session-banner {
+  background: var(--accent-d); border-bottom: 1px solid rgba(240,192,0,0.2);
+  padding: 8px 20px; display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0; animation: fadeUp 0.3s ease;
+}
+.session-banner-txt {
+  font-family: var(--mono); font-size: 0.62rem; color: var(--accent);
+  flex: 1; line-height: 1.5;
+}
+.session-banner-close {
+  background: none; border: none; color: var(--accent);
+  font-size: 0.8rem; cursor: pointer; padding: 2px 6px;
+  opacity: 0.6; transition: opacity 0.15s; flex-shrink: 0;
+}
+.session-banner-close:hover { opacity: 1; }
+
+.loading-strip { height: 2px; background: var(--border); flex-shrink: 0; position: relative; overflow: hidden; }
+.loading-strip.active::after {
+  content: ''; position: absolute; left: -40%; top: 0; bottom: 0; width: 40%;
+  background: var(--accent); animation: sweep 0.9s ease-in-out infinite;
+}
+@keyframes sweep { to { left: 100%; } }
+
+/* Feed wrapper takes remaining space and scrolls */
+.feed-wrap {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.feed-wrap::-webkit-scrollbar { width: 4px; }
+.feed-wrap::-webkit-scrollbar-track { background: transparent; }
+.feed-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.feed {
+  padding: 16px 20px;
+  display: flex; flex-direction: column-reverse; gap: 14px;
+  flex: 1;
+}
+
+.empty-feed {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; color: var(--t3); text-align: center; padding: 40px;
+  min-height: 200px;
+}
+.empty-feed .e-ico { font-size: 2.5rem; opacity: 0.3; }
+.empty-feed .e-txt { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 1px; line-height: 1.9; }
+
+/* Result card */
+.rcard {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+  animation: fadeUp 0.28s ease;
+  transition: border-color 0.2s, background 0.2s;
+}
+.rcard.solved {
+  border-color: rgba(34,197,94,0.35);
+  background: rgba(34,197,94,0.03);
+}
+.rcard.solved .rcard-hdr { background: rgba(34,197,94,0.06); }
+.rcard.solved .rcard-q { color: var(--t2); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.rcard-hdr {
+  padding: 10px 14px; background: var(--s2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.rcard-q {
+  font-family: var(--cond); font-size: 0.88rem; font-weight: 600;
+  color: var(--accent); flex: 1; letter-spacing: 0.3px; line-height: 1.3;
+  transition: color 0.2s;
+}
+.rcard-ts { font-family: var(--mono); font-size: 0.58rem; color: var(--t3); flex-shrink: 0; margin-top: 2px; }
+
+/* Action buttons in card header */
+.rcard-actions {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0; margin-top: 1px;
+}
+.rcard-action-btn {
+  background: none; border: 1px solid var(--border);
+  border-radius: 2px; color: var(--t3); cursor: pointer;
+  font-size: 0.65rem; padding: 2px 7px; transition: all 0.15s;
+  font-family: var(--mono); white-space: nowrap; line-height: 1.6;
+}
+.rcard-action-btn:hover { border-color: var(--text); color: var(--text); }
+.rcard-action-btn.copy-btn:hover { border-color: var(--blue); color: var(--blue); }
+.rcard-action-btn.copy-btn.copied { border-color: var(--green); color: var(--green); }
+.rcard-action-btn.solve-btn:hover { border-color: var(--green); color: var(--green); }
+.rcard-action-btn.solve-btn.solved { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.1); }
+.solved-badge {
+  font-family: var(--mono); font-size: 0.55rem; color: var(--green);
+  background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3);
+  padding: 1px 6px; border-radius: 2px; margin-top: 2px;
+  display: none; flex-shrink: 0;
+}
+.rcard.solved .solved-badge { display: inline-block; }
+.rcard-collapse-btn {
+  background: none; border: none; color: var(--t3);
+  cursor: pointer; font-size: 0.7rem; padding: 2px 4px;
+  transition: color 0.15s; flex-shrink: 0; margin-top: 1px;
+}
+.rcard-collapse-btn:hover { color: var(--accent); }
+
+.rcard-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+.sec-label {
+  font-family: var(--mono); font-size: 0.55rem;
+  letter-spacing: 2px; color: var(--t3); text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.provision-block {
+  background: var(--s2); border: 1px solid var(--border);
+  border-left: 3px solid var(--blue); border-radius: var(--r);
+  padding: 10px 13px;
+}
+.prov-ref { font-family: var(--mono); font-size: 0.68rem; color: var(--blue); margin-bottom: 5px; font-weight: 600; }
+.prov-txt { font-size: 0.83rem; color: var(--text); line-height: 1.6; }
+
+.interp-block {
+  background: var(--s2); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: var(--r);
+  padding: 10px 13px; font-size: 0.83rem; color: var(--text); line-height: 1.65;
+}
+
+.prec-hits {
+  border: 1px solid var(--border); border-left: 3px solid var(--red);
+  border-radius: var(--r); overflow: hidden;
+}
+.prec-hits-hdr {
+  background: var(--red-d); padding: 7px 12px;
+  font-family: var(--mono); font-size: 0.58rem; color: var(--red);
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.prec-hit {
+  padding: 9px 13px; border-top: 1px solid var(--border);
+}
+.prec-hit-q { font-size: 0.75rem; color: var(--t2); font-style: italic; margin-bottom: 3px; }
+.prec-hit-v { font-size: 0.8rem; color: var(--text); line-height: 1.5; }
+.prec-hit-meta { font-family: var(--mono); font-size: 0.58rem; color: var(--t3); margin-top: 4px; }
+
+/* Verdict form */
+.verdict-zone {
+  border-top: 1px solid var(--border); padding: 10px 14px;
+  background: var(--s2); flex-shrink: 0;
+}
+.verdict-lbl { font-family: var(--mono); font-size: 0.58rem; color: var(--t3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+
+.verdict-meta-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.verdict-field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.verdict-field-sm { flex: 0 0 160px; }
+.verdict-field-lbl { font-family: var(--mono); font-size: 0.55rem; color: var(--t3); letter-spacing: 1px; text-transform: uppercase; }
+
+#verdictTitle {
+  background: var(--s3); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text); font-family: var(--body);
+  font-size: 0.82rem; padding: 6px 9px; outline: none;
+  transition: border-color 0.2s; width: 100%;
+}
+#verdictTitle:focus { border-color: var(--green); }
+#verdictTitle::placeholder { color: var(--t3); }
+
+#verdictArea {
+  background: var(--s3); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text); font-family: var(--mono);
+  font-size: 0.68rem; padding: 6px 8px; outline: none;
+  transition: border-color 0.2s; width: 100%; cursor: pointer;
+  appearance: none;
+}
+#verdictArea:focus { border-color: var(--green); }
+
+/* Tag input */
+.tag-input-wrap {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  background: var(--s3); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 5px 8px; min-height: 32px;
+  cursor: text; transition: border-color 0.2s;
+}
+.tag-input-wrap:focus-within { border-color: var(--green); }
+.tag-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--accent-d); border: 1px solid rgba(240,192,0,0.3);
+  color: var(--accent); font-family: var(--mono); font-size: 0.6rem;
+  padding: 2px 6px; border-radius: 2px; white-space: nowrap;
+}
+.tag-chip-del {
+  background: none; border: none; color: var(--accent);
+  cursor: pointer; font-size: 0.65rem; padding: 0 1px;
+  line-height: 1; opacity: 0.6; transition: opacity 0.15s;
+}
+.tag-chip-del:hover { opacity: 1; }
+#tagInput {
+  background: none; border: none; color: var(--text);
+  font-family: var(--mono); font-size: 0.68rem;
+  outline: none; flex: 1; min-width: 80px; padding: 0;
+}
+#tagInput::placeholder { color: var(--t3); }
+
+.tag-suggestions {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;
+}
+.tag-sug {
+  font-family: var(--mono); font-size: 0.58rem;
+  background: var(--s3); border: 1px solid var(--border);
+  color: var(--t2); padding: 2px 7px; border-radius: 2px;
+  cursor: pointer; transition: all 0.15s;
+}
+.tag-sug:hover { border-color: var(--accent); color: var(--accent); }
+
+#verdictInput {
+  width: 100%; background: var(--s3); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text); font-family: var(--body);
+  font-size: 0.83rem; padding: 9px 11px; outline: none; resize: none;
+  height: 68px; line-height: 1.5; transition: border-color 0.2s; margin-bottom: 8px;
+}
+#verdictInput:focus { border-color: var(--green); }
+#verdictInput::placeholder { color: var(--t3); }
+.verdict-row { display: flex; align-items: center; gap: 10px; }
+.btn-save {
+  background: var(--green); color: #000; border: none;
+  border-radius: var(--r); font-family: var(--disp);
+  font-size: 0.9rem; letter-spacing: 2px; padding: 7px 16px;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.btn-save:hover { opacity: 0.85; }
+.verdict-ok { font-family: var(--mono); font-size: 0.65rem; color: var(--green); display: none; }
+.verdict-ok.show { display: flex; align-items: center; gap: 5px; }
+
+/* ═══ RIGHT PANEL – PRECEDENTY ═══ */
+.prec-search-wrap { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+#precSearch {
+  width: 100%; background: var(--s2); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text); font-family: var(--mono);
+  font-size: 0.68rem; padding: 7px 10px; outline: none; transition: border-color 0.2s;
+}
+#precSearch:focus { border-color: var(--accent); }
+#precSearch::placeholder { color: var(--t3); }
+
+/* Area filter chips */
+.area-filter-wrap {
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 4px; flex-shrink: 0;
+}
+.area-chip {
+  font-family: var(--mono); font-size: 0.55rem; padding: 3px 8px;
+  border-radius: 2px; border: 1px solid var(--border);
+  background: var(--s2); color: var(--t3); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.area-chip:hover { border-color: var(--accent); color: var(--text); }
+.area-chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-d); }
+
+/* Precedent card tags */
+.pc-title {
+  font-family: var(--cond); font-size: 0.82rem; font-weight: 600;
+  color: var(--text); margin-bottom: 3px; line-height: 1.2;
+}
+.pc-area-badge {
+  display: inline-block; font-family: var(--mono); font-size: 0.55rem;
+  padding: 1px 6px; border-radius: 2px; margin-bottom: 4px;
+  background: rgba(240,192,0,0.1); color: var(--accent);
+  border: 1px solid rgba(240,192,0,0.2);
+}
+.pc-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 4px; }
+.pc-tag {
+  font-family: var(--mono); font-size: 0.55rem;
+  background: var(--s3); border: 1px solid var(--border);
+  color: var(--t2); padding: 1px 5px; border-radius: 2px;
+}
+
+.prec-list {
+  flex: 1; overflow-y: auto; padding: 10px;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.prec-list::-webkit-scrollbar { width: 3px; }
+.prec-list::-webkit-scrollbar-thumb { background: var(--border); }
+
+.prec-empty { padding: 30px 14px; text-align: center; color: var(--t3); font-family: var(--mono); font-size: 0.65rem; line-height: 1.9; }
+
+.pc {
+  background: var(--s2); border: 1px solid var(--border);
+  border-left: 3px solid var(--t3); border-radius: var(--r);
+  padding: 9px 11px; cursor: pointer;
+  transition: border-left-color 0.15s, background 0.15s;
+  animation: fadeUp 0.2s ease;
+}
+.pc:hover { border-left-color: var(--accent); background: var(--s3); }
+.pc-q { font-size: 0.75rem; color: var(--text); line-height: 1.35; margin-bottom: 4px; }
+.pc-v {
+  font-size: 0.7rem; color: var(--t2); line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 5px;
+}
+.pc-foot { display: flex; justify-content: space-between; align-items: center; }
+.pc-by { font-family: var(--mono); font-size: 0.58rem; color: var(--accent); }
+.pc-date { font-family: var(--mono); font-size: 0.58rem; color: var(--t3); }
+.pc-del { background: none; border: none; color: var(--t3); cursor: pointer; font-size: 0.7rem; padding: 1px 4px; transition: color 0.15s; margin-left: 4px; }
+.pc-del:hover { color: var(--red); }
+
+.prec-footer {
+  padding: 8px 12px; border-top: 1px solid var(--border);
+  font-family: var(--mono); font-size: 0.58rem; color: var(--t3);
+  text-align: center; flex-shrink: 0;
+}
+
+/* ═══ PDF VIEWER MODAL ═══ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); width: 720px; max-width: 95vw;
+  height: 82vh; display: flex; flex-direction: column;
+  transform: translateY(12px); transition: transform 0.2s;
+  overflow: hidden;
+}
+.modal-overlay.open .modal { transform: none; }
+.modal-hdr {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  background: var(--s2);
+}
+.modal-title { font-family: var(--mono); font-size: 0.68rem; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-close {
+  background: none; border: none; color: var(--t3);
+  cursor: pointer; font-size: 1rem; padding: 2px 6px;
+  transition: color 0.15s; flex-shrink: 0;
+}
+.modal-close:hover { color: var(--red); }
+.modal-search-bar {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  display: flex; gap: 8px; flex-shrink: 0;
+}
+#pdfSearch {
+  flex: 1; background: var(--s2); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text); font-family: var(--mono);
+  font-size: 0.72rem; padding: 7px 10px; outline: none; transition: border-color 0.2s;
+}
+#pdfSearch:focus { border-color: var(--accent); }
+#pdfSearch::placeholder { color: var(--t3); }
+.modal-search-count { font-family: var(--mono); font-size: 0.62rem; color: var(--t3); align-self: center; white-space: nowrap; }
+.modal-body {
+  flex: 1; overflow-y: auto; padding: 16px 18px;
+  font-family: var(--mono); font-size: 0.75rem; line-height: 1.8;
+  color: var(--t2); white-space: pre-wrap; word-break: break-word;
+}
+.modal-body::-webkit-scrollbar { width: 4px; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--border); }
+.modal-body .pdf-page-sep {
+  display: block; margin: 14px 0 8px;
+  font-size: 0.6rem; letter-spacing: 2px; color: var(--t3);
+  border-top: 1px solid var(--border); padding-top: 8px;
+}
+.modal-body mark {
+  background: var(--accent); color: #000;
+  border-radius: 2px; padding: 0 2px;
+}
+.modal-file-tabs {
+  padding: 8px 14px; border-bottom: 1px solid var(--border);
+  display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
+  background: var(--s2);
+}
+.modal-tab {
+  font-family: var(--mono); font-size: 0.6rem; padding: 4px 10px;
+  border-radius: 2px; border: 1px solid var(--border);
+  background: var(--s3); color: var(--t2); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.modal-tab:hover { border-color: var(--accent); color: var(--text); }
+.modal-tab.active { border-color: var(--accent); color: var(--accent); background: var(--accent-d); }
+
+/* ═══ COLLAPSIBLE HISTORY CARDS ═══ */
+.rcard-body.collapsed { display: none; }
+.verdict-zone.collapsed { display: none !important; }
+.rcard-hdr { cursor: pointer; user-select: none; }
+.rcard-hdr:hover .rcard-collapse-btn { color: var(--accent); }
+
+/* History counter */
+.feed-counter {
+  font-family: var(--mono); font-size: 0.58rem; color: var(--t3);
+  padding: 6px 20px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0; display: none;
+}
+.feed-counter.show { display: block; }
+
+.upload-zone.hom { border-color: #3a2a1a; }
+.upload-zone.hom:hover { border-color: #f97316; background: rgba(249,115,22,0.08); }
+.upload-zone.hom.has-files { border-color: #f97316; border-style: solid; }
+.hom-badge {
+  display: inline-block; background: rgba(249,115,22,0.12); color: #f97316;
+  font-family: var(--mono); font-size: 0.55rem; letter-spacing: 1px;
+  padding: 2px 6px; border-radius: 2px; margin-bottom: 4px; text-transform: uppercase;
+}
+.file-item.hom { border-left: 2px solid #f97316; }
+
+/* ═══ FOLLOW-UP VLÁKNO ═══ */
+.thread {
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column;
+}
+.thread-item {
+  border-top: 1px dashed var(--border);
+  animation: fadeUp 0.22s ease;
+}
+.thread-item-hdr {
+  padding: 8px 14px; display: flex; align-items: center; gap: 8px;
+  cursor: pointer; transition: background 0.15s;
+}
+.thread-item-hdr:hover { background: rgba(255,255,255,0.02); }
+.thread-arrow { font-family: var(--mono); font-size: 0.7rem; color: var(--t3); flex-shrink: 0; }
+.thread-item-q {
+  font-family: var(--cond); font-size: 0.8rem; font-weight: 600;
+  color: var(--accent); flex: 1; letter-spacing: 0.3px; line-height: 1.3;
+}
+.thread-item-ts { font-family: var(--mono); font-size: 0.58rem; color: var(--t3); flex-shrink: 0; }
+.thread-collapse-btn {
+  background: none; border: none; color: var(--t3);
+  cursor: pointer; font-size: 0.65rem; padding: 1px 4px;
+  transition: color 0.15s; flex-shrink: 0;
+}
+.thread-collapse-btn:hover { color: var(--accent); }
+.thread-item-body {
+  padding: 0 14px 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.thread-item-body.collapsed { display: none; }
+.thread-loading {
+  padding: 10px 14px; border-top: 1px dashed var(--border);
+  font-family: var(--mono); font-size: 0.65rem; color: var(--t3);
+  display: flex; align-items: center; gap: 8px;
+}
+.thread-spinner {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.followup-zone {
+  border-top: 1px solid var(--border);
+  padding: 10px 14px; background: var(--s2);
+  display: flex; gap: 8px; align-items: flex-end;
+}
+.followup-zone textarea {
+  flex: 1; background: var(--s3); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text); font-family: var(--body);
+  font-size: 0.82rem; padding: 7px 10px; outline: none; resize: none;
+  height: 52px; line-height: 1.5; transition: border-color 0.2s;
+}
+.followup-zone textarea:focus { border-color: var(--accent); }
+.followup-zone textarea::placeholder { color: var(--t3); }
+.followup-btn {
+  background: var(--s3); border: 1px solid var(--border);
+  color: var(--accent); font-family: var(--mono); font-size: 0.65rem;
+  padding: 0 12px; height: 52px; border-radius: var(--r);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  letter-spacing: 1px; flex-shrink: 0;
+}
+.followup-btn:hover { border-color: var(--accent); background: var(--accent-d); }
+.followup-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Provision – odkaz do PDF */
+.prov-link {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: var(--mono); font-size: 0.58rem;
+  color: var(--accent); background: var(--accent-d);
+  border: 1px solid rgba(240,192,0,0.2);
+  border-radius: 2px; padding: 1px 6px; margin-left: 6px;
+  cursor: pointer; transition: all 0.15s;
+  vertical-align: middle; white-space: nowrap;
+}
+.prov-link:hover { background: var(--accent); color: #000; }
+
+.toast {
+  position: fixed; bottom: 18px; left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--s3); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 9px 18px;
+  font-family: var(--mono); font-size: 0.7rem; color: var(--text);
+  transition: transform 0.25s ease; z-index: 999; pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.g { border-color: var(--green); color: var(--green); }
+.toast.r { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="flag"><div class="flag-r"></div><div class="flag-w"></div></div>
+  <div>
+    <div class="h-title">AČR MOTOKÁRY</div>
+    <div class="h-sub">Komisařský systém · Pravidla &amp; Precedenty</div>
+  </div>
+  <div class="h-sep"></div>
+  <div class="h-right">
+    <span class="h-label">Komisař:</span>
+    <input type="text" id="commName" placeholder="Vaše jméno..." maxlength="40">
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- ═══ LEVÝ PANEL ═══ -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-hdr-title">📄 Pravidla AČR</span>
+    </div>
+
+    <!-- Primární – CZ -->
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="pdfInput" accept=".pdf" multiple>
+      <span class="upload-ico">📋</span>
+      <div class="upload-txt">
+        <strong>Česká pravidla AČR</strong>
+        Přetáhněte nebo klikněte · více PDF najednou
+      </div>
+    </div>
+
+    <div class="file-list-wrap" id="fileListWrapPri" style="display:none">
+      <div class="file-list-header">
+        <span class="file-list-label" id="fileLabelPri">0 souborů</span>
+        <button class="file-list-clear" id="fileClearPri">vymazat vše</button>
+      </div>
+      <div class="file-list" id="fileListPri"></div>
+    </div>
+
+    <div class="processing-bar" id="procBar">
+      <div class="processing-label" id="procLabel">NAČÍTÁM PDF...</div>
+      <div class="processing-track"><div class="processing-fill" id="procFill"></div></div>
+    </div>
+
+    <hr class="panel-divider">
+
+    <!-- Sekundární – EN -->
+    <div class="upload-zone sec" id="uploadZoneSec">
+      <input type="file" id="pdfInputSec" accept=".pdf" multiple>
+      <span class="upload-ico">🌐</span>
+      <div class="sec-badge">EN · Výkladový dokument</div>
+      <div class="upload-txt">
+        <strong>CIK / FIA pravidla (EN)</strong>
+        Sekundární zdroj · použit pokud CZ neřeší
+      </div>
+    </div>
+
+    <div class="file-list-wrap" id="fileListWrapSec" style="display:none">
+      <div class="file-list-header">
+        <span class="file-list-label" id="fileLabelSec">0 souborů</span>
+        <button class="file-list-clear" id="fileClearSec">vymazat vše</button>
+      </div>
+      <div class="file-list" id="fileListSec"></div>
+    </div>
+
+    <div class="processing-bar" id="procBarSec">
+      <div class="processing-label" id="procLabelSec">NAČÍTÁM EN PDF...</div>
+      <div class="processing-track"><div class="processing-fill" id="procFillSec"></div></div>
+    </div>
+
+    <hr class="panel-divider">
+
+    <!-- Homologace -->
+    <div class="upload-zone hom" id="uploadZoneHom">
+      <input type="file" id="pdfInputHom" accept=".pdf" multiple>
+      <span class="upload-ico">🏎</span>
+      <div class="hom-badge">Homologace</div>
+      <div class="upload-txt">
+        <strong>Homologační listy</strong>
+        Technické specifikace vozů
+      </div>
+    </div>
+
+    <div class="file-list-wrap" id="fileListWrapHom" style="display:none">
+      <div class="file-list-header">
+        <span class="file-list-label" id="fileLabelHom">0 souborů</span>
+        <button class="file-list-clear" id="fileClearHom">vymazat vše</button>
+      </div>
+      <div class="file-list" id="fileListHom"></div>
+    </div>
+
+    <div class="processing-bar" id="procBarHom">
+      <div class="processing-label" id="procLabelHom">NAČÍTÁM HOMOLOGACE...</div>
+      <div class="processing-track"><div class="processing-fill" id="procFillHom"></div></div>
+    </div>
+
+    <div class="api-box">
+      <div class="api-lbl">Anthropic API klíč</div>
+      <div class="api-wrap">
+        <input type="password" id="apiKey" placeholder="sk-ant-...">
+        <button class="api-eye" id="apiEye" title="Zobrazit/skrýt">👁</button>
+      </div>
+      <button class="btn-small" id="apiSave">ULOŽIT KLÍČ</button>
+    </div>
+  </div>
+
+  <!-- ═══ HLAVNÍ PANEL ═══ -->
+  <div class="main">
+    <div class="query-box">
+      <div class="q-label">Zadejte dotaz k pravidlům</div>
+      <div class="q-row">
+        <div class="rules-indicator" id="rulesIndicator">
+          <div class="rules-dot"></div>
+          <span id="rulesIndicatorText">Žádná pravidla</span>
+        </div>
+        <textarea id="queryInput" placeholder="Např.: Jaká je penalizace za falešný start? / Co říká pravidlo o předjíždění v boxové uličce?"></textarea>
+        <button id="askBtn">HLEDAT</button>
+      </div>
+    </div>
+
+    <div class="loading-strip" id="loadingStrip"></div>
+    <div class="session-banner" id="sessionBanner" style="display:none">
+      <div class="session-banner-txt" id="sessionBannerTxt"></div>
+      <button class="session-banner-close" id="sessionBannerClose">✕</button>
+    </div>
+    <div class="feed-counter" id="feedCounter"></div>
+
+    <div class="feed-wrap">
+      <div class="feed" id="feed">
+        <div class="empty-feed" id="emptyFeed">
+          <div class="e-ico">🏁</div>
+          <div class="e-txt">
+            Nahrajte česká pravidla AČR (vlevo nahoře)<br>
+            Volitelně: anglický CIK/FIA dokument (vlevo dole)<br>
+            Zadejte API klíč · Položte dotaz
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verdict form – fixed at bottom -->
+    <div class="verdict-zone" id="verdictZone" style="display:none">
+      <div class="verdict-lbl">Zapsat verdikt / precedent</div>
+
+      <div class="verdict-meta-row">
+        <div class="verdict-field">
+          <div class="verdict-field-lbl">Název rozhodnutí</div>
+          <input type="text" id="verdictTitle" placeholder="Krátký popisný název..." maxlength="80">
+        </div>
+        <div class="verdict-field verdict-field-sm">
+          <div class="verdict-field-lbl">Oblast</div>
+          <select id="verdictArea">
+            <option value="">— bez oblasti —</option>
+            <option value="Motor">Motor</option>
+            <option value="Pneumatiky">Pneumatiky</option>
+            <option value="Karoserie">Karoserie &amp; šasi</option>
+            <option value="Bezpečnost">Bezpečnost</option>
+            <option value="Chování na trati">Chování na trati</option>
+            <option value="Start">Start &amp; restart</option>
+            <option value="Boxová ulička">Boxová ulička</option>
+            <option value="Technická kontrola">Technická kontrola</option>
+            <option value="Protest">Protest &amp; odvolání</option>
+            <option value="Jiné">Jiné</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="verdict-field" style="margin-bottom:8px">
+        <div class="verdict-field-lbl">Štítky <span style="color:var(--t3);font-size:0.55rem">(Enter nebo čárka pro přidání)</span></div>
+        <div class="tag-input-wrap" id="tagInputWrap">
+          <div class="tag-chips" id="tagChips"></div>
+          <input type="text" id="tagInput" placeholder="přidat štítek...">
+        </div>
+        <div class="tag-suggestions" id="tagSuggestions"></div>
+      </div>
+
+      <textarea id="verdictInput" placeholder="Popište verdikt, rozhodnutí a odůvodnění..."></textarea>
+      <div class="verdict-row">
+        <button class="btn-save" id="verdictSave">ULOŽIT VERDIKT</button>
+        <div class="verdict-ok" id="verdictOk">✓ Verdikt uložen jako precedent</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PRAVÝ PANEL – PRECEDENTY ═══ -->
+  <div class="panel panel-r">
+    <div class="panel-hdr">
+      <span class="panel-hdr-title">⚖️ Precedenty</span>
+    </div>
+    <div class="prec-search-wrap">
+      <input type="text" id="precSearch" placeholder="Hledat v precedentech...">
+    </div>
+    <div class="area-filter-wrap" id="areaFilterWrap" style="display:none">
+      <span class="area-chip active" data-area="">Vše</span>
+    </div>
+    <div class="prec-list" id="precList">
+      <div class="prec-empty">Žádné precedenty.<br>Po každém dotazu<br>můžete zapsat verdikt.</div>
+    </div>
+    <div class="prec-footer" id="precFooter">0 precedentů uloženo</div>
+  </div>
+
+</div>
+
+<!-- ═══ PDF VIEWER MODAL ═══ -->
+<div class="modal-overlay" id="pdfModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="modalTitle">Náhled dokumentu</span>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-file-tabs" id="modalTabs"></div>
+    <div class="modal-search-bar">
+      <input type="text" id="pdfSearch" placeholder="Hledat v dokumentu...">
+      <span class="modal-search-count" id="pdfSearchCount"></span>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const state = {
+  priFiles: [],   // { name, pages, text }
+  secFiles: [],   // { name, pages, text }
+  homFiles: [],   // { name, pages, text } – homologace
+  history: [],    // uložené dotazy pro session restore
+  currentQuestion: '',
+  currentResult: null,
+  loading: false,
+};
+function buildText(arr) { return arr.map(f => f.text).join('\n\n'); }
+
+// ══════════════════════════════════════════════
+//  PDF VIEWER MODAL
+// ══════════════════════════════════════════════
+let modalActiveGroup = 'pri';
+let modalSearchTimer = null;
+
+function openPdfModal(isSec) {
+  const files = isSec ? state.secFiles : state.priFiles;
+  if (files.length === 0) { showToast('Žádné soubory k zobrazení', 'r'); return; }
+  modalActiveGroup = isSec ? 'sec' : 'pri';
+  renderModalTabs(files, 0);
+  document.getElementById('pdfModal').classList.add('open');
+  document.getElementById('pdfSearch').value = '';
+  document.getElementById('pdfSearchCount').textContent = '';
+  document.getElementById('pdfSearch').focus();
+}
+
+function renderModalTabs(files, activeIdx) {
+  const tabs = document.getElementById('modalTabs');
+  tabs.innerHTML = files.map((f, i) => `
+    <button class="modal-tab ${i === activeIdx ? 'active' : ''}" data-idx="${i}">${escHtml(f.name)}</button>
+  `).join('');
+  tabs.querySelectorAll('.modal-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const files = modalActiveGroup === 'sec' ? state.secFiles : state.priFiles;
+      renderModalTabs(files, parseInt(btn.dataset.idx));
+      renderModalContent(files[parseInt(btn.dataset.idx)]);
+    });
+  });
+  renderModalContent(files[activeIdx]);
+  document.getElementById('modalTitle').textContent = files[activeIdx].name;
+}
+
+function renderModalContent(file) {
+  const body = document.getElementById('modalBody');
+  // Rozděl na stránky a zobraz s oddělovači
+  const pages = file.text.split(/--- .+ \| Strana \d+ ---/);
+  const pageNums = [...file.text.matchAll(/--- .+ \| Strana (\d+) ---/g)].map(m => m[1]);
+  let html = '';
+  pages.forEach((p, i) => {
+    if (i > 0) html += `<span class="pdf-page-sep">── STRANA ${pageNums[i-1]} ──</span>`;
+    html += escHtml(p.trim());
+  });
+  body.innerHTML = html;
+  body.scrollTop = 0;
+  // Re-apply search if active
+  const q = document.getElementById('pdfSearch').value.trim();
+  if (q) highlightSearch(q);
+}
+
+function highlightSearch(query) {
+  const body = document.getElementById('modalBody');
+  if (!query) {
+    // Remove highlights
+    body.querySelectorAll('mark').forEach(m => {
+      m.replaceWith(document.createTextNode(m.textContent));
+    });
+    body.normalize();
+    document.getElementById('pdfSearchCount').textContent = '';
+    return;
+  }
+  // Reset first
+  body.querySelectorAll('mark').forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
+  body.normalize();
+
+  const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let node;
+  while ((node = walker.nextNode())) nodes.push(node);
+
+  const re = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  let count = 0;
+  nodes.forEach(n => {
+    if (!n.textContent.match(re)) return;
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    n.textContent.replace(re, (match, offset) => {
+      frag.appendChild(document.createTextNode(n.textContent.slice(last, offset)));
+      const mark = document.createElement('mark');
+      mark.textContent = match;
+      frag.appendChild(mark);
+      last = offset + match.length;
+      count++;
+    });
+    frag.appendChild(document.createTextNode(n.textContent.slice(last)));
+    n.parentNode.replaceChild(frag, n);
+  });
+
+  document.getElementById('pdfSearchCount').textContent = count > 0 ? `${count} nálezů` : 'nenalezeno';
+  // Scroll to first match
+  const first = body.querySelector('mark');
+  if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
+
+
+// ══════════════════════════════════════════════
+//  LOCALSTORAGE HELPERS
+// ══════════════════════════════════════════════
+function loadPrecedents() {
+  try { return JSON.parse(localStorage.getItem('acr_precedents') || '[]'); } catch { return []; }
+}
+function savePrecedents(arr) {
+  localStorage.setItem('acr_precedents', JSON.stringify(arr));
+}
+function loadCommName() { return localStorage.getItem('acr_commname') || ''; }
+function saveCommName(n) { localStorage.setItem('acr_commname', n); }
+function loadApiKey() { return localStorage.getItem('acr_apikey') || ''; }
+function saveApiKey(k) { localStorage.setItem('acr_apikey', k); }
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  const commName = loadCommName();
+  if (commName) document.getElementById('commName').value = commName;
+
+  const apiKey = loadApiKey();
+  if (apiKey) {
+    document.getElementById('apiKey').value = apiKey;
+    document.getElementById('apiSave').textContent = 'KLÍČ ULOŽEN ✓';
+    document.getElementById('apiSave').classList.add('ok');
+  }
+
+  renderPrecedents();
+  renderAreaFilter();
+  initTagInput();
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  // Obnov session
+  restoreSession(loadSession());
+
+  document.getElementById('commName').addEventListener('input', e => saveCommName(e.target.value));
+  document.getElementById('apiSave').addEventListener('click', () => {
+    const k = document.getElementById('apiKey').value.trim();
+    if (!k) { showToast('Zadejte API klíč', 'r'); return; }
+    saveApiKey(k);
+    document.getElementById('apiSave').textContent = 'KLÍČ ULOŽEN ✓';
+    document.getElementById('apiSave').classList.add('ok');
+    showToast('API klíč uložen', 'g');
+  });
+  document.getElementById('apiEye').addEventListener('click', () => {
+    const inp = document.getElementById('apiKey');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
+
+  // Upload events
+  document.getElementById('pdfInput').addEventListener('change', e => { handleFiles(e.target.files, 'pri'); e.target.value = ''; });
+  document.getElementById('pdfInputSec').addEventListener('change', e => { handleFiles(e.target.files, 'sec'); e.target.value = ''; });
+  document.getElementById('pdfInputHom').addEventListener('change', e => { handleFiles(e.target.files, 'hom'); e.target.value = ''; });
+
+  const uz = document.getElementById('uploadZone');
+  uz.addEventListener('dragover', e => { e.preventDefault(); uz.style.borderColor = 'var(--accent)'; });
+  uz.addEventListener('dragleave', () => uz.style.borderColor = '');
+  uz.addEventListener('drop', e => { e.preventDefault(); uz.style.borderColor = ''; handleFiles(e.dataTransfer.files, 'pri'); });
+
+  const uzSec = document.getElementById('uploadZoneSec');
+  uzSec.addEventListener('dragover', e => { e.preventDefault(); uzSec.style.borderColor = 'var(--blue)'; });
+  uzSec.addEventListener('dragleave', () => uzSec.style.borderColor = '');
+  uzSec.addEventListener('drop', e => { e.preventDefault(); uzSec.style.borderColor = ''; handleFiles(e.dataTransfer.files, 'sec'); });
+
+  const uzHom = document.getElementById('uploadZoneHom');
+  uzHom.addEventListener('dragover', e => { e.preventDefault(); uzHom.style.borderColor = '#f97316'; });
+  uzHom.addEventListener('dragleave', () => uzHom.style.borderColor = '');
+  uzHom.addEventListener('drop', e => { e.preventDefault(); uzHom.style.borderColor = ''; handleFiles(e.dataTransfer.files, 'hom'); });
+
+  document.getElementById('fileClearPri').addEventListener('click', () => { state.priFiles = []; renderFileList('pri'); showToast('Česká pravidla odebrána', 'r'); });
+  document.getElementById('fileClearSec').addEventListener('click', () => { state.secFiles = []; renderFileList('sec'); showToast('EN dokumenty odebrány', 'r'); });
+  document.getElementById('fileClearHom').addEventListener('click', () => { state.homFiles = []; renderFileList('hom'); showToast('Homologace odebrány', 'r'); });
+
+  document.getElementById('askBtn').addEventListener('click', handleAsk);
+  document.getElementById('queryInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAsk(); }
+  });
+  document.getElementById('verdictSave').addEventListener('click', handleVerdictSave);
+  document.getElementById('precSearch').addEventListener('input', e => renderPrecedents(e.target.value));
+
+  // PDF modal
+  document.getElementById('modalClose').addEventListener('click', () => {
+    document.getElementById('pdfModal').classList.remove('open');
+  });
+  document.getElementById('pdfModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('pdfModal'))
+      document.getElementById('pdfModal').classList.remove('open');
+  });
+  document.getElementById('pdfSearch').addEventListener('input', e => {
+    clearTimeout(modalSearchTimer);
+    modalSearchTimer = setTimeout(() => highlightSearch(e.target.value.trim()), 300);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('pdfModal').classList.remove('open');
+  });
+});
+
+// ══════════════════════════════════════════════
+//  RENDER FILE LIST
+// ══════════════════════════════════════════════
+function renderFileList(group) {
+  const files = group === 'hom' ? state.homFiles : group === 'sec' ? state.secFiles : state.priFiles;
+  const listEl = document.getElementById(group === 'hom' ? 'fileListHom' : group === 'sec' ? 'fileListSec' : 'fileListPri');
+  const wrapEl = document.getElementById(group === 'hom' ? 'fileListWrapHom' : group === 'sec' ? 'fileListWrapSec' : 'fileListWrapPri');
+  const labelEl = document.getElementById(group === 'hom' ? 'fileLabelHom' : group === 'sec' ? 'fileLabelSec' : 'fileLabelPri');
+  const zoneEl = document.getElementById(group === 'hom' ? 'uploadZoneHom' : group === 'sec' ? 'uploadZoneSec' : 'uploadZone');
+
+  if (files.length === 0) { wrapEl.style.display = 'none'; zoneEl.classList.remove('has-files'); return; }
+
+  wrapEl.style.display = 'block';
+  zoneEl.classList.add('has-files');
+  const totalPages = files.reduce((s, f) => s + f.pages, 0);
+  labelEl.textContent = `${files.length} soubor${files.length > 1 ? 'y/ů' : ''} · ${totalPages} stran`;
+
+  listEl.innerHTML = files.map((f, i) => `
+    <div class="file-item ${group}" style="cursor:pointer" title="Klikni pro náhled">
+      <span class="file-ico">📄</span>
+      <span class="file-name" title="${escHtml(f.name)}">${escHtml(f.name)}</span>
+      <span class="file-pages">${f.pages}s</span>
+      <button class="file-del" data-idx="${i}" data-group="${group}">✕</button>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('.file-item').forEach((item, i) => {
+    item.addEventListener('click', e => {
+      if (e.target.classList.contains('file-del')) return;
+      const grp = item.querySelector('.file-del').dataset.group;
+      const grpFiles = grp === 'hom' ? state.homFiles : grp === 'sec' ? state.secFiles : state.priFiles;
+      modalActiveGroup = grp;
+      renderModalTabs(grpFiles, i);
+      document.getElementById('pdfModal').classList.add('open');
+      document.getElementById('pdfSearch').value = '';
+      document.getElementById('pdfSearchCount').textContent = '';
+    });
+  });
+
+  listEl.querySelectorAll('.file-del').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const grp = btn.dataset.group;
+      if (grp === 'hom') state.homFiles.splice(idx, 1);
+      else if (grp === 'sec') state.secFiles.splice(idx, 1);
+      else state.priFiles.splice(idx, 1);
+      renderFileList(grp);
+      showToast('Soubor odebrán', 'r');
+    });
+  });
+}
+
+// ══════════════════════════════════════════════
+//  PDF LOADING
+// ══════════════════════════════════════════════
+async function handleFiles(files, group) {
+  if (!files || files.length === 0) return;
+  const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+  if (pdfFiles.length === 0) { showToast('Vyberte PDF soubory', 'r'); return; }
+
+  const stateArr = group === 'hom' ? state.homFiles : group === 'sec' ? state.secFiles : state.priFiles;
+  const existing = stateArr.map(f => f.name);
+  const newFiles = pdfFiles.filter(f => !existing.includes(f.name));
+  if (newFiles.length === 0) { showToast('Tyto soubory jsou již nahrány', 'r'); return; }
+
+  const barId = group === 'hom' ? 'procBarHom' : group === 'sec' ? 'procBarSec' : 'procBar';
+  const labelId = group === 'hom' ? 'procLabelHom' : group === 'sec' ? 'procLabelSec' : 'procLabel';
+  const fillId = group === 'hom' ? 'procFillHom' : group === 'sec' ? 'procFillSec' : 'procFill';
+  const defaultLabel = group === 'hom' ? 'NAČÍTÁM HOMOLOGACE...' : group === 'sec' ? 'NAČÍTÁM EN PDF...' : 'NAČÍTÁM PDF...';
+
+  const showProc = (show, label = '', pct = 0) => {
+    document.getElementById(barId).classList.toggle('show', show);
+    if (show) { document.getElementById(labelId).textContent = label; document.getElementById(fillId).style.width = pct + '%'; }
+  };
+
+  showProc(true, defaultLabel, 0);
+
+  for (let fi = 0; fi < newFiles.length; fi++) {
+    const file = newFiles[fi];
+    showProc(true, `NAČÍTÁM: ${file.name}`, Math.round((fi / newFiles.length) * 80));
+    try {
+      const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+      let text = '';
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        text += `\n\n--- ${file.name} | Strana ${p} ---\n` + content.items.map(i => i.str).join(' ');
+        showProc(true, `${file.name} · ${p}/${pdf.numPages}`, Math.round(((fi + p / pdf.numPages) / newFiles.length) * 95));
+      }
+      stateArr.push({ name: file.name, pages: pdf.numPages, text });
+    } catch (err) {
+      showToast(`Chyba: ${file.name}`, 'r');
+    }
+  }
+
+  showProc(true, 'HOTOVO ✓', 100);
+  setTimeout(() => {
+    showProc(false);
+    renderFileList(group);
+    updateRulesIndicator();
+    saveSession();
+    showToast(`Načteno ${newFiles.length} soubor${newFiles.length > 1 ? 'y' : ''} ✓`, 'g');
+  }, 500);
+}
+
+// ══════════════════════════════════════════════
+//  FIND RELEVANT CHUNKS (save tokens)
+// ══════════════════════════════════════════════
+function findRelevantChunks(question, fullText, maxChars = 12000) {
+  if (!fullText) return '';
+  const words = question.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  const paragraphs = fullText.split(/\n{2,}/);
+
+  const scored = paragraphs.map(p => {
+    const pl = p.toLowerCase();
+    const score = words.reduce((s, w) => s + (pl.includes(w) ? 1 : 0), 0);
+    return { p, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  let result = '';
+  for (const { p, score } of scored) {
+    if (score === 0 && result.length > 2000) break;
+    if (result.length + p.length > maxChars) break;
+    result += p + '\n\n';
+  }
+
+  return result || fullText.slice(0, maxChars);
+}
+
+// ══════════════════════════════════════════════
+//  FIND MATCHING PRECEDENTS
+// ══════════════════════════════════════════════
+function findMatchingPrecedents(question) {
+  const precedents = loadPrecedents();
+  if (precedents.length === 0) return [];
+  const qWords = question.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  return precedents
+    .map(p => {
+      const text = [p.title, p.question, p.verdict, p.area, ...(p.tags || [])].filter(Boolean).join(' ').toLowerCase();
+      const score = qWords.reduce((s, w) => s + (text.includes(w) ? 1 : 0), 0);
+      return { ...p, score };
+    })
+    .filter(p => p.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+}
+
+// ══════════════════════════════════════════════
+//  ASK
+// ══════════════════════════════════════════════
+async function handleAsk() {
+  if (state.loading) return;
+  const question = document.getElementById('queryInput').value.trim();
+  if (!question) { showToast('Zadejte dotaz', 'r'); return; }
+
+  const apiKey = loadApiKey() || document.getElementById('apiKey').value.trim();
+  if (!apiKey) { showToast('Nejprve zadejte API klíč', 'r'); return; }
+  if (state.priFiles.length === 0) { showToast('Nejprve nahrajte PDF pravidel', 'r'); return; }
+
+  state.loading = true;
+  state.currentQuestion = question;
+  setLoading(true);
+
+  const czText = buildText(state.priFiles);
+  const enText = buildText(state.secFiles);
+  const homText = buildText(state.homFiles);
+  const relevantCzech = findRelevantChunks(question, czText, 8000);
+  const relevantEn = enText ? findRelevantChunks(question, enText, 4000) : '';
+  const relevantHom = homText ? findRelevantChunks(question, homText, 5000) : '';
+  const matchedPrecedents = findMatchingPrecedents(question);
+
+  const precedentContext = matchedPrecedents.length > 0
+    ? `\n\nRELEVANTNÍ PRECEDENTY Z MINULÝCH ROZHODNUTÍ:\n` +
+      matchedPrecedents.map((p, i) =>
+        `[P${i+1}] Dotaz: "${p.question}"\nVerdikt komisaře ${p.commissioner} (${p.date}): ${p.verdict}`
+      ).join('\n\n')
+    : '';
+
+  const secDocSection = relevantEn
+    ? `\n\nSEKUNDÁRNÍ DOKUMENT – ANGLICKÁ PRAVIDLA (CIK/FIA) – použij pouze pokud česká pravidla situaci neřeší nebo jako výkladové vodítko:\n${relevantEn}`
+    : '';
+
+  const homSection = relevantHom
+    ? `\n\nHOMOLOGACE VOZŮ – technické specifikace a schválené parametry:\n${relevantHom}`
+    : '';
+
+  const systemPrompt = `Jsi zkušený poradce a asistent komisařů závodů motokár AČR. Tvým úkolem je pomoci komisaři rychle dohledat relevantní pravidla, vysvětlit jejich smysl a navrhnout možný postup – konečné rozhodnutí vždy zůstává na komisaři.
+
+PRIORITA ZDROJŮ:
+1. Česká pravidla AČR – primární zdroj, vždy preferuj.
+2. Homologační listy – pro technické specifikace a parametry vozů.
+3. Anglická pravidla CIK/FIA – pouze pokud česká pravidla situaci neřeší, nebo jako výkladové vodítko.
+
+TÓN A STYL:
+- Piš jako zkušený kolega který situaci dobře zná a chce komisaři pomoci.
+- Výklad: vysvětli co pravidlo říká a co to znamená v dané situaci. Klidně buď podrobný pokud je to potřeba.
+- Doporučení: navrhni možný postup – „Mohli byste zvážit...", „Standardní postup v takovém případě bývá...", „Podle tohoto ustanovení by bylo opodstatněné..."
+- Pokud pravidlo situaci přímo neupravuje, řekni to a navrhni analogický postup nebo doporučení kde hledat dál.
+- Nikdy nerozhoduj místo komisaře – jsi rádce, ne arbitr.
+
+FORMÁT ODPOVĚDI – KRITICKÉ:
+Odpovídej POUZE čistým JSON objektem. Žádný text před ani za. Žádné markdown bloky. Žádné \`\`\`json. Pouze samotný JSON:
+
+{"provisions":[{"ref":"článek nebo název","text":"přesné znění nebo shrnutí","source":"AČR"}],"interpretation":"výklad co pravidlo říká a co to znamená v této situaci","recommendation":"návrh možného postupu pro komisaře","used_secondary":false}
+
+Pokud ustanovení neexistuje, použij prázdné pole provisions:[]. Hodnota used_secondary je true pokud jsi použil CIK/FIA nebo homologace.`;
+
+  const userPrompt = `PRIMÁRNÍ PRAVIDLA AČR (česky):\n${relevantCzech}${homSection}${secDocSection}${precedentContext}\n\nDOTAZ KOMISAŘE: ${question}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || '';
+
+    let parsed;
+    try {
+      // Zkus najít JSON blok různými způsoby
+      let jsonStr = raw;
+
+      // 1. Odstraň markdown code fences
+      jsonStr = jsonStr.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+
+      // 2. Najdi první { a poslední } – vezmi jen JSON část
+      const firstBrace = jsonStr.indexOf('{');
+      const lastBrace = jsonStr.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+      }
+
+      parsed = JSON.parse(jsonStr.trim());
+
+      // Validace – musí mít aspoň interpretation
+      if (!parsed.interpretation) throw new Error('missing interpretation');
+
+    } catch {
+      // Fallback – zobraz text hezky i když není JSON
+      parsed = {
+        provisions: [],
+        interpretation: raw
+          .replace(/```json|```/gi, '')
+          .replace(/"provisions":\s*\[[\s\S]*?\],?/g, '')
+          .replace(/"interpretation":\s*"/g, '')
+          .replace(/"recommendation":\s*"/g, '\n\nDoporučení: ')
+          .replace(/"used_secondary":\s*(true|false)/g, '')
+          .replace(/[{}[\]"]/g, '')
+          .trim() || raw,
+        recommendation: '',
+        used_secondary: false,
+        _parseError: true,
+      };
+    }
+
+    state.currentResult = { question, parsed, matchedPrecedents, timestamp: new Date(), id: Date.now() };
+    renderResult(state.currentResult);
+    document.getElementById('queryInput').value = '';
+    resetVerdictForm();
+    document.getElementById('verdictZone').style.display = 'block';
+
+  } catch (err) {
+    showToast('Chyba API: ' + err.message, 'r');
+    console.error(err);
+  } finally {
+    state.loading = false;
+    setLoading(false);
+  }
+}
+
+function renderResult(r, restoreMode = false) {
+  const feed = document.getElementById('feed');
+  document.getElementById('emptyFeed')?.remove();
+
+  const ts = r.timestamp.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+
+  // PDF odkaz – otevře modal a hledá ref
+  function provLink(ref, group) {
+    const term = (ref || '').replace(/[^\w\s\d\.]/g, '').trim().split(/\s+/).slice(0, 4).join(' ');
+    return `<span class="prov-link" data-term="${escHtml(term)}" data-group="${group}">🔍 v PDF</span>`;
+  }
+
+  const provisions = (r.parsed.provisions || []).map(p => {
+    const isSec = p.source === 'CIK/FIA';
+    const isHom = p.source === 'Homologace';
+    const hasFiles = isHom ? state.homFiles.length > 0 : isSec ? state.secFiles.length > 0 : state.priFiles.length > 0;
+    const borderColor = isHom ? '#f97316' : isSec ? 'var(--blue)' : '';
+    const badge = isHom
+      ? '<span style="margin-left:6px;font-size:0.6rem;background:rgba(249,115,22,0.15);color:#f97316;padding:1px 5px;border-radius:2px;font-family:var(--mono)">HOM</span>'
+      : isSec ? '<span style="margin-left:6px;font-size:0.6rem;background:var(--blue-d);color:var(--blue);padding:1px 5px;border-radius:2px;font-family:var(--mono)">EN</span>' : '';
+    const grp = isHom ? 'hom' : isSec ? 'sec' : 'pri';
+    return `
+    <div class="provision-block" style="${borderColor ? `border-left-color:${borderColor}` : ''}">
+      <div class="prov-ref">
+        📌 ${escHtml(p.ref || 'Ustanovení')}
+        ${badge}
+        ${hasFiles ? provLink(p.ref || '', grp) : ''}
+      </div>
+      <div class="prov-txt">${escHtml(p.text || '')}</div>
+    </div>`;
+  }).join('');
+
+  const precedentHits = r.matchedPrecedents.length > 0 ? `
+    <div>
+      <div class="sec-label">Relevantní precedenty</div>
+      <div class="prec-hits">
+        <div class="prec-hits-hdr">⚠ ${r.matchedPrecedents.length} shodný/ch precedent(ů) nalezen/o</div>
+        ${r.matchedPrecedents.map(p => `
+          <div class="prec-hit">
+            ${p.title ? `<div style="font-family:var(--cond);font-size:0.8rem;font-weight:600;color:var(--text);margin-bottom:2px">${escHtml(p.title)}</div>` : ''}
+            ${p.area ? `<span style="font-family:var(--mono);font-size:0.55rem;background:var(--accent-d);color:var(--accent);padding:1px 5px;border-radius:2px;margin-bottom:4px;display:inline-block">${escHtml(p.area)}</span>` : ''}
+            <div class="prec-hit-q">"${escHtml(p.question)}"</div>
+            <div class="prec-hit-v">${escHtml(p.verdict)}</div>
+            <div class="prec-hit-meta">Komisař ${escHtml(p.commissioner)} · ${escHtml(p.date)}</div>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  const recommendation = r.parsed.recommendation ? `
+    <div>
+      <div class="sec-label">Doporučení</div>
+      <div class="interp-block" style="border-left-color:var(--green)">${escHtml(r.parsed.recommendation)}</div>
+    </div>` : '';
+
+  const secNotice = r.parsed.used_secondary
+    ? `<div style="margin-bottom:10px;padding:7px 12px;background:var(--blue-d);border:1px solid var(--blue);border-radius:var(--r);font-family:var(--mono);font-size:0.62rem;color:var(--blue)">
+        🌐 Použit anglický dokument CIK/FIA jako výkladové vodítko</div>` : '';
+
+  const parseErrorNotice = r.parsed._parseError
+    ? `<div style="margin-bottom:10px;padding:7px 12px;background:var(--red-d);border:1px solid var(--red);border-radius:var(--r);font-family:var(--mono);font-size:0.62rem;color:var(--red)">
+        ⚠ Odpověď nebyla plně strukturována – zobrazuji surový text. Zkuste dotaz přeformulovat.</div>` : '';
+
+  const card = document.createElement('div');
+  card.className = 'rcard';
+  card.innerHTML = `
+    <div class="rcard-hdr">
+      <div class="rcard-q">${escHtml(r.question)}</div>
+      <div class="rcard-ts">${ts}</div>
+      <span class="solved-badge">✓ Vyřešeno</span>
+      <div class="rcard-actions">
+        <button class="rcard-action-btn copy-btn" title="Kopírovat výklad do schránky">⎘ kopírovat</button>
+        <button class="rcard-action-btn solve-btn" title="Označit jako vyřešené">✓ vyřešit</button>
+        <button class="rcard-collapse-btn">▲</button>
+      </div>
+    </div>
+    <div class="rcard-body">
+      ${parseErrorNotice}
+      ${secNotice}
+      ${provisions ? `<div><div class="sec-label">Příslušná ustanovení</div>${provisions}</div>` : ''}
+      <div><div class="sec-label">Výklad</div>
+        <div class="interp-block">${escHtml(r.parsed.interpretation || '')}</div>
+      </div>
+      ${recommendation}
+      ${precedentHits}
+    </div>
+    <div class="thread" id="thread-${r.id}"></div>
+    <div class="followup-zone">
+      <textarea placeholder="Doplňující dotaz k tomuto rozhodnutí..." rows="2"></textarea>
+      <button class="followup-btn">↳ DOPTAT SE</button>
+    </div>`;
+
+  // Collapsible
+  const hdr = card.querySelector('.rcard-hdr');
+  const body = card.querySelector('.rcard-body');
+  const btn = card.querySelector('.rcard-collapse-btn');
+  hdr.addEventListener('click', e => {
+    if (e.target.classList.contains('prov-link')) return;
+    if (e.target.closest('.rcard-actions')) return;
+    const c = body.classList.toggle('collapsed');
+    btn.textContent = c ? '▼' : '▲';
+  });
+
+  // Kopírovat výklad
+  const copyBtn = card.querySelector('.copy-btn');
+  copyBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    const provisions = (r.parsed.provisions || []).map(p =>
+      `[${p.source || 'AČR'}] ${p.ref}: ${p.text}`
+    ).join('\n');
+    const text = [
+      `DOTAZ: ${r.question}`,
+      '',
+      provisions ? `USTANOVENÍ:\n${provisions}` : '',
+      '',
+      `VÝKLAD:\n${r.parsed.interpretation || ''}`,
+      r.parsed.recommendation ? `\nDOPORUČENÍ:\n${r.parsed.recommendation}` : '',
+      '',
+      `— AČR Komisařský systém · ${ts}`,
+    ].filter(l => l !== undefined).join('\n').trim();
+
+    navigator.clipboard.writeText(text).then(() => {
+      copyBtn.textContent = '✓ zkopírováno';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = '⎘ kopírovat';
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => showToast('Kopírování selhalo', 'r'));
+  });
+
+  // Označit jako vyřešené
+  const solveBtn = card.querySelector('.solve-btn');
+  solveBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    const isSolved = card.classList.toggle('solved');
+    solveBtn.textContent = isSolved ? '✓ vyřešeno' : '✓ vyřešit';
+    solveBtn.classList.toggle('solved', isSolved);
+    showToast(isSolved ? 'Označeno jako vyřešené' : 'Označení odebráno', isSolved ? 'g' : '');
+  });
+
+  // PDF links
+  card.querySelectorAll('.prov-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.stopPropagation();
+      const group = link.dataset.group;
+      const term = link.dataset.term;
+      const files = group === 'hom' ? state.homFiles : group === 'sec' ? state.secFiles : state.priFiles;
+      if (!files.length) { showToast('PDF není načteno', 'r'); return; }
+      modalActiveGroup = group;
+      renderModalTabs(files, 0);
+      document.getElementById('pdfModal').classList.add('open');
+      document.getElementById('pdfSearch').value = term;
+      setTimeout(() => highlightSearch(term), 120);
+    });
+  });
+
+  // Follow-up
+  const fuTextarea = card.querySelector('.followup-zone textarea');
+  const fuBtn = card.querySelector('.followup-btn');
+  const thread = card.querySelector('.thread');
+
+  fuTextarea.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); triggerFollowUp(); }
+  });
+  fuBtn.addEventListener('click', triggerFollowUp);
+
+  function triggerFollowUp() {
+    const q = fuTextarea.value.trim();
+    if (!q) return;
+    fuTextarea.value = '';
+    handleFollowUp(q, r, thread, fuBtn);
+  }
+
+  feed.appendChild(card);
+
+  // Scroll to bottom (ne při restore)
+  if (!restoreMode) {
+    const wrap = document.querySelector('.feed-wrap');
+    if (wrap) setTimeout(() => { wrap.scrollTop = wrap.scrollHeight; }, 50);
+  }
+
+  // Ulož do history state a session
+  if (!restoreMode) {
+    if (!state.history) state.history = [];
+    state.history.push({
+      id: r.id,
+      question: r.question,
+      parsed: r.parsed,
+      matchedPrecedents: r.matchedPrecedents,
+      timestamp: r.timestamp.getTime(),
+    });
+    saveSession();
+  }
+
+  // Counter
+  const count = feed.querySelectorAll('.rcard').length;
+  const counter = document.getElementById('feedCounter');
+  counter.textContent = `${count} dotaz${count === 1 ? '' : count < 5 ? 'y' : 'ů'} v této relaci`;
+  counter.classList.add('show');
+}
+
+// ══════════════════════════════════════════════
+//  FOLLOW-UP (doplňující dotaz)
+// ══════════════════════════════════════════════
+async function handleFollowUp(followUpQ, originalResult, threadEl, btn) {
+  const apiKey = loadApiKey() || document.getElementById('apiKey').value.trim();
+  if (!apiKey) { showToast('Nejprve zadejte API klíč', 'r'); return; }
+
+  btn.disabled = true;
+
+  // Přidej loading indikátor
+  const loadingEl = document.createElement('div');
+  loadingEl.className = 'thread-loading';
+  loadingEl.innerHTML = `<div class="thread-spinner"></div><span>Hledám odpověď...</span>`;
+  threadEl.appendChild(loadingEl);
+
+  // Scroll
+  const wrap = document.querySelector('.feed-wrap');
+  if (wrap) setTimeout(() => { wrap.scrollTop = wrap.scrollHeight; }, 50);
+
+  // Sestav kontext z vlákna
+  const existingThread = [...threadEl.querySelectorAll('.thread-item')].map(item => {
+    const q = item.querySelector('.thread-q')?.textContent?.trim() || '';
+    const a = item.querySelector('.thread-interp')?.textContent?.trim() || '';
+    return `Otázka: ${q}\nOdpověď: ${a}`;
+  }).join('\n\n');
+
+  const czText = buildText(state.priFiles);
+  const enText = buildText(state.secFiles);
+  const homText = buildText(state.homFiles);
+  const relevantCzech = findRelevantChunks(followUpQ, czText, 6000);
+  const relevantEn = enText ? findRelevantChunks(followUpQ, enText, 3000) : '';
+  const relevantHom = homText ? findRelevantChunks(followUpQ, homText, 3000) : '';
+
+  const systemPrompt = `Jsi zkušený poradce a asistent komisařů závodů motokár AČR. Odpovídáš na doplňující dotaz v kontextu předchozí diskuse.
+Piš jako zkušený kolega – vysvětluj, navrhuj, pomáhej. Konečné rozhodnutí je vždy na komisaři. Klidně buď podrobný pokud to situace vyžaduje.
+
+FORMÁT – POUZE čistý JSON, žádný text okolo, žádné markdown bloky:
+{"provisions":[{"ref":"článek","text":"shrnutí","source":"AČR"}],"interpretation":"výklad a kontext situace","recommendation":"návrh možného postupu"}`;
+
+  const userPrompt = `PŮVODNÍ DOTAZ: ${originalResult.question}
+
+PŮVODNÍ ODPOVĚĎ – výklad: ${originalResult.parsed.interpretation || ''}
+PŮVODNÍ ODPOVĚĎ – doporučení: ${originalResult.parsed.recommendation || ''}
+
+${existingThread ? `PŘEDCHOZÍ DOPLŇUJÍCÍ DOTAZY:\n${existingThread}\n\n` : ''}PRAVIDLA (relevantní části):\n${relevantCzech}${relevantEn ? '\n\nEN PRAVIDLA:\n' + relevantEn : ''}${relevantHom ? '\n\nHOMOLOGACE:\n' + relevantHom : ''}
+
+DOPLŇUJÍCÍ DOTAZ: ${followUpQ}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1200,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || '';
+    let parsed;
+    try {
+      let jsonStr = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+      const fb = jsonStr.indexOf('{'), lb = jsonStr.lastIndexOf('}');
+      if (fb !== -1 && lb > fb) jsonStr = jsonStr.slice(fb, lb + 1);
+      parsed = JSON.parse(jsonStr.trim());
+      if (!parsed.interpretation) throw new Error('missing');
+    } catch {
+      parsed = { provisions: [], interpretation: raw.replace(/[{}"[\]]/g, '').trim(), recommendation: '' };
+    }
+
+    // Odstraň loading
+    loadingEl.remove();
+
+    const ts = new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+
+    // Sestav thread item
+    const item = document.createElement('div');
+    item.className = 'thread-item';
+
+    const provHtml = (parsed.provisions || []).map(p => {
+      const isSec = p.source === 'CIK/FIA';
+      const isHom = p.source === 'Homologace';
+      const borderColor = isHom ? '#f97316' : isSec ? 'var(--blue)' : 'var(--blue)';
+      const badge = isHom
+        ? '<span style="margin-left:5px;font-size:0.58rem;background:rgba(249,115,22,0.15);color:#f97316;padding:1px 5px;border-radius:2px;font-family:var(--mono)">HOM</span>'
+        : isSec ? '<span style="margin-left:5px;font-size:0.58rem;background:var(--blue-d);color:var(--blue);padding:1px 5px;border-radius:2px;font-family:var(--mono)">EN</span>' : '';
+      return `<div class="provision-block" style="border-left-color:${borderColor};padding:8px 11px">
+        <div class="prov-ref" style="font-size:0.65rem">📌 ${escHtml(p.ref || '')}${badge}</div>
+        <div class="prov-txt" style="font-size:0.8rem">${escHtml(p.text || '')}</div>
+      </div>`;
+    }).join('');
+
+    item.innerHTML = `
+      <div class="thread-item-hdr">
+        <span class="thread-arrow">↳</span>
+        <div class="thread-item-q">${escHtml(followUpQ)}</div>
+        <span class="thread-item-ts">${ts}</span>
+        <button class="thread-collapse-btn" title="Sbalit/rozbalit">▲</button>
+      </div>
+      <div class="thread-item-body">
+        ${provHtml ? `<div style="display:flex;flex-direction:column;gap:5px">${provHtml}</div>` : ''}
+        <div class="thread-interp">${escHtml(parsed.interpretation || '')}</div>
+        ${parsed.recommendation ? `<div class="thread-rec">${escHtml(parsed.recommendation)}</div>` : ''}
+      </div>`;
+
+    // Collapsible pro thread item
+    const tHdr = item.querySelector('.thread-item-hdr');
+    const tBody = item.querySelector('.thread-item-body');
+    const tBtn = item.querySelector('.thread-collapse-btn');
+    tHdr.addEventListener('click', () => {
+      const c = tBody.classList.toggle('collapsed');
+      tBtn.textContent = c ? '▼' : '▲';
+    });
+
+    threadEl.appendChild(item);
+
+    if (wrap) setTimeout(() => { wrap.scrollTop = wrap.scrollHeight; }, 50);
+
+  } catch (err) {
+    loadingEl.innerHTML = `<span style="color:var(--red)">Chyba: ${escHtml(err.message)}</span>`;
+    setTimeout(() => loadingEl.remove(), 3000);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  SESSION PERSISTENCE
+// ══════════════════════════════════════════════
+function saveSession() {
+  try {
+    const session = {
+      priFiles: state.priFiles.map(f => ({ name: f.name, pages: f.pages })), // bez textu
+      secFiles: state.secFiles.map(f => ({ name: f.name, pages: f.pages })),
+      homFiles: state.homFiles.map(f => ({ name: f.name, pages: f.pages })),
+      history: state.history || [],
+      savedAt: Date.now(),
+    };
+    localStorage.setItem('acr_session', JSON.stringify(session));
+  } catch(e) { /* localStorage plný */ }
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem('acr_session');
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    // Ignoruj session starší než 24 hodin
+    if (Date.now() - s.savedAt > 24 * 60 * 60 * 1000) { localStorage.removeItem('acr_session'); return null; }
+    return s;
+  } catch { return null; }
+}
+
+function restoreSession(session) {
+  if (!session) return;
+
+  const hasPri = session.priFiles?.length > 0;
+  const hasSec = session.secFiles?.length > 0;
+  const hasHom = session.homFiles?.length > 0;
+  const hasHistory = session.history?.length > 0;
+
+  if (!hasPri && !hasHistory) return;
+
+  // Obnov info o souborech (bez textu – PDF musí nahrát znovu)
+  if (hasPri) {
+    state.priFiles = session.priFiles.map(f => ({ name: f.name, pages: f.pages, text: '' }));
+    renderFileList('pri');
+  }
+  if (hasSec) {
+    state.secFiles = session.secFiles.map(f => ({ name: f.name, pages: f.pages, text: '' }));
+    renderFileList('sec');
+  }
+  if (hasHom) {
+    state.homFiles = session.homFiles.map(f => ({ name: f.name, pages: f.pages, text: '' }));
+    renderFileList('hom');
+  }
+
+  // Obnov historii dotazů
+  if (hasHistory) {
+    session.history.forEach(r => {
+      r.timestamp = new Date(r.timestamp);
+      renderResult(r, true); // true = restore mode (bez scroll)
+    });
+  }
+
+  // Zobraz banner
+  const parts = [];
+  if (hasPri || hasSec || hasHom) {
+    const fileCount = (session.priFiles?.length || 0) + (session.secFiles?.length || 0) + (session.homFiles?.length || 0);
+    parts.push(`${fileCount} PDF soubor${fileCount > 1 ? 'y' : ''} (nahrajte znovu pro dotazování)`);
+  }
+  if (hasHistory) parts.push(`${session.history.length} dotaz${session.history.length > 1 ? 'ů' : ''} z minulé relace`);
+
+  const banner = document.getElementById('sessionBanner');
+  document.getElementById('sessionBannerTxt').textContent = `↺ Obnovena relace: ${parts.join(' · ')}`;
+  banner.style.display = 'flex';
+  document.getElementById('sessionBannerClose').addEventListener('click', () => {
+    banner.style.display = 'none';
+  });
+
+  updateRulesIndicator();
+}
+
+// ══════════════════════════════════════════════
+//  RULES INDICATOR
+// ══════════════════════════════════════════════
+function updateRulesIndicator() {
+  const ind = document.getElementById('rulesIndicator');
+  const txt = document.getElementById('rulesIndicatorText');
+  if (!ind) return;
+
+  const priLoaded = state.priFiles.some(f => f.text && f.text.length > 0);
+  const priExists = state.priFiles.length > 0;
+  const secLoaded = state.secFiles.some(f => f.text && f.text.length > 0);
+  const homLoaded = state.homFiles.some(f => f.text && f.text.length > 0);
+
+  if (priLoaded) {
+    const extras = [secLoaded && 'EN', homLoaded && 'HOM'].filter(Boolean);
+    ind.className = 'rules-indicator ready';
+    txt.textContent = `Pravidla načtena${extras.length ? ' + ' + extras.join(' + ') : ''}`;
+  } else if (priExists) {
+    ind.className = 'rules-indicator partial';
+    txt.textContent = 'PDF nahrát znovu';
+  } else {
+    ind.className = 'rules-indicator';
+    txt.textContent = 'Žádná pravidla';
+  }
+}
+
+
+// ══════════════════════════════════════════════
+let currentTags = [];
+let activeAreaFilter = '';
+
+function initTagInput() {
+  const input = document.getElementById('tagInput');
+  const wrap = document.getElementById('tagInputWrap');
+  if (!input) return;
+
+  wrap.addEventListener('click', () => input.focus());
+
+  input.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+      e.preventDefault();
+      addTag(input.value.trim().replace(/,/g, ''));
+      input.value = '';
+      renderTagSuggestions('');
+    } else if (e.key === 'Backspace' && !input.value && currentTags.length) {
+      currentTags.pop();
+      renderTagChips();
+    }
+  });
+
+  input.addEventListener('input', () => {
+    renderTagSuggestions(input.value.trim());
+  });
+}
+
+function addTag(tag) {
+  tag = tag.trim();
+  if (!tag || currentTags.includes(tag)) return;
+  currentTags.push(tag);
+  renderTagChips();
+}
+
+function renderTagChips() {
+  const chips = document.getElementById('tagChips');
+  if (!chips) return;
+  chips.innerHTML = currentTags.map((t, i) => `
+    <span class="tag-chip">
+      ${escHtml(t)}
+      <button class="tag-chip-del" data-idx="${i}">✕</button>
+    </span>
+  `).join('');
+  chips.querySelectorAll('.tag-chip-del').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentTags.splice(parseInt(btn.dataset.idx), 1);
+      renderTagChips();
+    });
+  });
+}
+
+function renderTagSuggestions(query) {
+  const box = document.getElementById('tagSuggestions');
+  if (!box) return;
+  // Sesbírej existující tagy z precedentů
+  const allTags = [...new Set(loadPrecedents().flatMap(p => p.tags || []))];
+  const filtered = allTags.filter(t =>
+    !currentTags.includes(t) &&
+    (!query || t.toLowerCase().includes(query.toLowerCase()))
+  ).slice(0, 8);
+  box.innerHTML = filtered.map(t =>
+    `<span class="tag-sug">${escHtml(t)}</span>`
+  ).join('');
+  box.querySelectorAll('.tag-sug').forEach(el => {
+    el.addEventListener('click', () => {
+      addTag(el.textContent.trim());
+      document.getElementById('tagInput').value = '';
+      renderTagSuggestions('');
+    });
+  });
+}
+
+function resetVerdictForm() {
+  currentTags = [];
+  renderTagChips();
+  document.getElementById('verdictTitle').value = '';
+  document.getElementById('verdictArea').value = '';
+  document.getElementById('verdictInput').value = '';
+  document.getElementById('tagInput').value = '';
+  document.getElementById('tagSuggestions').innerHTML = '';
+  document.getElementById('verdictOk').classList.remove('show');
+  document.getElementById('verdictSave').style.display = '';
+}
+
+// ══════════════════════════════════════════════
+//  VERDICT SAVE
+// ══════════════════════════════════════════════
+function handleVerdictSave() {
+  const verdict = document.getElementById('verdictInput').value.trim();
+  if (!verdict) { showToast('Zadejte verdikt', 'r'); return; }
+  if (!state.currentResult) return;
+
+  const commissioner = document.getElementById('commName').value.trim() || 'Neznámý komisař';
+  const title = document.getElementById('verdictTitle').value.trim();
+  const area = document.getElementById('verdictArea').value;
+  const precedents = loadPrecedents();
+
+  precedents.unshift({
+    id: Date.now(),
+    title: title || '',
+    question: state.currentResult.question,
+    verdict,
+    commissioner,
+    area: area || '',
+    tags: [...currentTags],
+    date: new Date().toLocaleDateString('cs-CZ'),
+    timestamp: Date.now(),
+  });
+
+  savePrecedents(precedents);
+  renderPrecedents();
+  renderAreaFilter();
+  saveSession();
+
+  document.getElementById('verdictOk').classList.add('show');
+  document.getElementById('verdictSave').style.display = 'none';
+  showToast('Verdikt uložen jako precedent ✓', 'g');
+}
+
+// ══════════════════════════════════════════════
+//  AREA FILTER
+// ══════════════════════════════════════════════
+function renderAreaFilter() {
+  const wrap = document.getElementById('areaFilterWrap');
+  const precedents = loadPrecedents();
+  const areas = [...new Set(precedents.map(p => p.area).filter(Boolean))];
+
+  if (areas.length === 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+
+  wrap.innerHTML = `<span class="area-chip ${activeAreaFilter === '' ? 'active' : ''}" data-area="">Vše</span>` +
+    areas.map(a => `<span class="area-chip ${activeAreaFilter === a ? 'active' : ''}" data-area="${escHtml(a)}">${escHtml(a)}</span>`).join('');
+
+  wrap.querySelectorAll('.area-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      activeAreaFilter = chip.dataset.area;
+      renderAreaFilter();
+      renderPrecedents(document.getElementById('precSearch').value);
+    });
+  });
+}
+
+// ══════════════════════════════════════════════
+//  RENDER PRECEDENTS
+// ══════════════════════════════════════════════
+function renderPrecedents(filter = '') {
+  const list = document.getElementById('precList');
+  let precedents = loadPrecedents();
+
+  // Filter by area
+  if (activeAreaFilter) {
+    precedents = precedents.filter(p => p.area === activeAreaFilter);
+  }
+
+  // Filter by search
+  if (filter) {
+    const fl = filter.toLowerCase();
+    precedents = precedents.filter(p =>
+      (p.title || '').toLowerCase().includes(fl) ||
+      p.question.toLowerCase().includes(fl) ||
+      p.verdict.toLowerCase().includes(fl) ||
+      p.commissioner.toLowerCase().includes(fl) ||
+      (p.area || '').toLowerCase().includes(fl) ||
+      (p.tags || []).some(t => t.toLowerCase().includes(fl))
+    );
+  }
+
+  document.getElementById('precFooter').textContent =
+    `${loadPrecedents().length} precedentů uloženo`;
+
+  if (precedents.length === 0) {
+    list.innerHTML = `<div class="prec-empty">${filter || activeAreaFilter ? 'Žádné výsledky.' : 'Žádné precedenty.\nPo každém dotazu\nlze zapsat verdikt.'}</div>`;
+    return;
+  }
+
+  list.innerHTML = precedents.map(p => `
+    <div class="pc" data-id="${p.id}">
+      ${p.title ? `<div class="pc-title">${escHtml(p.title)}</div>` : ''}
+      ${p.area ? `<div class="pc-area-badge">${escHtml(p.area)}</div>` : ''}
+      ${p.tags && p.tags.length ? `<div class="pc-tags">${p.tags.map(t => `<span class="pc-tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
+      <div class="pc-q">${escHtml(p.question)}</div>
+      <div class="pc-v">${escHtml(p.verdict)}</div>
+      <div class="pc-foot">
+        <span class="pc-by">${escHtml(p.commissioner)}</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <span class="pc-date">${escHtml(p.date)}</span>
+          <button class="pc-del" data-id="${p.id}" title="Smazat">✕</button>
+        </span>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.pc-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      deletePrecedent(parseInt(btn.dataset.id));
+    });
+  });
+
+  list.querySelectorAll('.pc').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.classList.contains('pc-del')) return;
+      const id = parseInt(card.dataset.id);
+      const p = loadPrecedents().find(x => x.id === id);
+      if (p) {
+        document.getElementById('queryInput').value = p.question;
+        showToast('Dotaz vložen do pole', 'g');
+      }
+    });
+  });
+}
+
+function deletePrecedent(id) {
+  const precedents = loadPrecedents().filter(p => p.id !== id);
+  savePrecedents(precedents);
+  renderAreaFilter();
+  renderPrecedents(document.getElementById('precSearch').value);
+  showToast('Precedent smazán', 'r');
+}
+
+// ══════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════
+function setLoading(on) {
+  document.getElementById('askBtn').disabled = on;
+  document.getElementById('askBtn').textContent = on ? '...' : 'HLEDAT';
+  document.getElementById('loadingStrip').classList.toggle('active', on);
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ' ' + type : '') + ' show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/\n/g, '<br>');
+}
+</script>
+</body>
+</html>
